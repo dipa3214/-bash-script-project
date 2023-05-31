@@ -1,0 +1,177 @@
+menu_choice=""
+record_file="clothRecords.ldb"
+temp_file=/tmp/ldb.$$
+touch $temp_file; chmod 644 $temp_file
+trap 'rm -f $temp_file' EXIT
+
+
+get_return(){
+printf 'Press return\n'
+read x
+return 0
+}
+
+get_confirm(){
+printf '\t\t\033[45mAre you sure?\033[m\n'
+while true
+do
+  read x
+  case "$x" in
+      y|yes|Y|Yes|YES)
+      return 0;;
+      n|no|N|No|NO)
+          printf '\ncancelled\n'
+          return 1;;
+      *) printf 'Please enter yes or no';;
+  esac
+done
+}
+
+set_menu_choice(){
+clear
+printf "\033[43mSelect an Options:-\033[m"
+printf '\n'
+printf '\t\033[32ma) Add new Cloths records\033[m\n'
+printf '\t\033[32mb) Find Cloths\033[m\n'
+printf '\t\033[32mc) Edit Cloths\033[m\n'
+printf '\t\033[32md) Remove Cloths\033[m\n'
+printf '\t\033[32me) View Available Cloths\033[m\n'
+printf '\t\033[41mf) Quit\033[m\n'
+printf '\033[44mPlease enter the choice then press return\033[m\n'
+read menu_choice
+return
+}
+
+insert_record(){
+echo $* >>$record_file
+return
+}
+
+
+add_cloths(){
+
+printf 'Enter Cloths category:-'
+read tmp
+liCatNum=${tmp%%,*}
+
+printf 'Enter Cloths Name:-'
+read tmp
+liclothNum=${tmp%%,*}
+
+printf 'Enter Cloth Size:-'
+read tmp
+lisizeNum=${tmp%%,*}
+
+printf '\033[45mAbout to add new entry\033[m\n'
+printf "Cloths category:$liCatNum\tCloths Name:$liclothNum\tCloth Size:$lisizeNum\n"
+
+if get_confirm; then
+   insert_record $liCatNum,$liclothNum,$lisizeNum
+fi
+
+return
+}
+
+find_cloths(){
+  printf "\033[44mEnter Cloth Name to find:\033[m"
+  read cloth2find
+  grep $cloth2find $record_file > $temp_file
+
+  linesfound=`cat $temp_file|wc -l`
+
+  case `echo $linesfound` in
+  0)    echo "Sorry, nothing found"
+        get_return
+        return 0
+        ;;
+  *)    printf "\033[33mFound the following\033[m\n"
+        cat $temp_file
+        get_return
+        return 0
+  esac
+return
+}
+
+remove_cloths() {
+
+  linesfound=`cat $record_file|wc -l`
+
+   case `echo $linesfound` in
+   0)    echo "Sorry, nothing found\n"
+         get_return
+         return 0
+         ;;
+   *)    echo "Found the following\n"
+         cat $record_file ;;
+        esac
+ printf "\033[34mType the Cloths Name which you want to delete\033[m\n"
+ read searchstr
+
+  if [ "$searchstr" = "" ]; then
+      return 0
+   fi
+ grep -v "$searchstr" $record_file > $temp_file
+ mv $temp_file $record_file
+ printf "\033[45mCloth has been removed\033[m\n"
+ get_return
+return
+}
+
+view_cloths(){
+printf "\033[45mList of Cloths are\033[m\n"
+
+cat $record_file
+get_return
+return
+}
+
+
+
+edit_cloths(){
+
+printf "\033[45mlist of cloths are\033[m\n"
+cat $record_file
+printf "\033[43mType the cloth name you want to edit\033[m\n"
+read searchstr
+  if [ "$searchstr" = "" ]; then
+     return 0
+  fi
+  grep -v "$searchstr" $record_file > $temp_file
+  mv $temp_file $record_file
+printf "\033[33mEnter the new record\033[m\n"
+add_cloths
+
+}
+
+rm -f $temp_file
+if [!-f $record_file];then
+touch $record_file
+fi
+
+clear
+printf '\n\n\n'
+printf "\033[43m**-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-**\033[m\n"
+printf '\033[42m***Clothing Store Management System****\033[m\n'
+printf "\033[43m**-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-**\033[m\n"
+sleep 10
+
+quit="n"
+while [ "$quit" != "y" ];
+do
+
+set_menu_choice
+case "$menu_choice" in
+a) add_cloths;;
+b) find_cloths;;
+c) edit_cloths;;
+d) remove_cloths;;
+e) view_cloths;;
+f) quit=y;;
+*) printf "Invalid Choice";;
+esac
+
+done
+
+rm -f $temp_file
+printf "\033[41mYou are Quit the System\033[m\n"
+exit 0
